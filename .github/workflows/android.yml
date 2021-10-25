@@ -21,3 +21,26 @@ jobs:
         name: app-armeabi-v7a-release-unsigned.apk
         path: app/build/outputs/apk/common/release/app-common-armeabi-v7a-release-unsigned.apk
 
+    - name: Create GitHub release
+      id: create_release
+#       if: steps.version_check.outputs.changed == 'true'
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: V-${{ steps.buildnumber.outputs.build_number }}
+        release_name: V-${{ steps.buildnumber.outputs.build_number }}
+        body: |
+          # Changelog
+          Release type: ${{ steps.buildnumber.outputs.build_number }}
+    
+    - name: Upload APK Asset
+      if: steps.create_release.outputs.upload_url && steps.prepare_release.outputs.apk_path && steps.prepare_release.outputs.apk_name
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      with:
+        upload_url: ${{steps.create_release.outputs.upload_url}}
+        asset_path: ${{steps.prepare_release.outputs.apk_path}}
+        asset_name: ${{steps.prepare_release.outputs.apk_name}}
+        asset_content_type: application/vnd.android.package-archive
